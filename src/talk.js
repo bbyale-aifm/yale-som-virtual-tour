@@ -10,6 +10,6 @@ export const talk = {
   speakingUntil: 0,
 }
 
-export const TALK_RANGE = 7 // meters: close enough to start a conversation
+export const TALK_RANGE = 12 // meters: close enough to start a conversation
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? ''
