@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import Labubu from './Labubu.jsx'
-import { talk, talkables } from './talk.js'
+import { player, talk, talkables } from './talk.js'
 
 // Prof. Zaman: black hoodie with a BLACKPINK print, jeans, white kicks, glasses,
 // and a pink Labubu swinging off his belt loop. Faces +z; his right hand is at -x.
-// When you're chatting with him he turns to face you and talks with his hands.
+// When you're chatting with him he turns to face your Labubu and talks with his hands.
 
 const SKIN = '#c68a5e'
 const HAIR = '#141010'
@@ -66,23 +66,23 @@ export default function Zaman({ position = [0, 0, 0], rotation = 0 }) {
     return () => talkables.delete(obj)
   }, [])
 
-  useFrame(({ clock, camera }, rawDt) => {
+  useFrame(({ clock }, rawDt) => {
     const dt = Math.min(rawDt, 0.05)
     const t = clock.elapsedTime
     const chatting = talk.with === 'zaman'
     const speaking = chatting && performance.now() < talk.speakingUntil
     const r = root.current
     r.getWorldPosition(me)
-    const dx = camera.position.x - me.x
-    const dz = camera.position.z - me.z
+    const dx = player.x - me.x
+    const dz = player.z - me.z
 
     // body: turn toward you while chatting, otherwise scan the room
     const yaw = chatting ? Math.atan2(dx, dz) : rotation + Math.sin(t * 0.4) * 0.35
     r.rotation.y = angleLerp(r.rotation.y, yaw, Math.min(1, dt * (chatting ? 5 : 2)))
     r.position.y = position[1] + Math.abs(Math.sin(t * 2.2)) * 0.012 // little bounce, he's hyped
 
-    // head: look up/down at your eyes when chatting, nod along while talking
-    const pitch = chatting ? -Math.atan2(camera.position.y - (me.y + 1.63), Math.hypot(dx, dz)) : 0
+    // head: look down at your Labubu's face when chatting, nod along while talking
+    const pitch = chatting ? -Math.atan2(player.y + 0.75 - (me.y + 1.63), Math.hypot(dx, dz)) : 0
     const nod = speaking ? Math.sin(t * 7) * 0.06 : 0
     head.current.rotation.x += (THREE.MathUtils.clamp(pitch, -0.5, 0.5) + nod - head.current.rotation.x) * Math.min(1, dt * 6)
     head.current.rotation.z = speaking ? Math.sin(t * 3.1) * 0.05 : 0

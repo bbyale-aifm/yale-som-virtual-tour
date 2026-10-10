@@ -5,6 +5,9 @@
 
 export const talkables = new Set()
 
+// where your Labubu is standing (feet), so professors can look at you
+export const player = { x: 0, y: 0, z: 0 }
+
 export const talk = {
   with: null,
   speakingUntil: 0,

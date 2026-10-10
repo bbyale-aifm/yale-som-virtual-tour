@@ -319,6 +319,22 @@ export function collide(pos) {
   return pos
 }
 
+// third-person camera: is the point (x, y, z) inside or within r of a wall at that height?
+// Desks and other low colliders don't count once the camera is above them.
+export function cameraBlocked(x, y, z, r = 0.25) {
+  for (const s of COLLIDERS) {
+    if (y > s.y0 + s.h || y < s.y0) continue
+    const rr = r + s.t / 2
+    if (x < s.minx - rr || x > s.maxx + rr || z < s.minz - rr || z > s.maxz + rr) continue
+    const dx = s.b[0] - s.a[0]
+    const dz = s.b[1] - s.a[1]
+    const l2 = dx * dx + dz * dz
+    const u = l2 > 0 ? Math.max(0, Math.min(1, ((x - s.a[0]) * dx + (z - s.a[1]) * dz) / l2)) : 0
+    if (Math.hypot(x - (s.a[0] + dx * u), z - (s.a[1] + dz * u)) < rr) return true
+  }
+  return false
+}
+
 export function locate(x, z) {
   for (const d of DRUMS) {
     if (((x - d.c[0]) / d.rx) ** 2 + ((z - d.c[1]) / d.rz) ** 2 < 1) return `${d.name} · ${d.id}`

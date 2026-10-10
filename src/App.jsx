@@ -87,7 +87,7 @@ export default function App() {
           <div className="card">
             <div className="kicker">Yale SOM · Evans Hall</div>
             <h1>Floor 2</h1>
-            <p className="sub">Classroom drums, the cloister, Ross Library, the Beinecke Terrace Room, and the courtyard.</p>
+            <p className="sub">Walk around as a Labubu: classroom drums, the cloister, Ross Library, the Beinecke Terrace Room, and the courtyard. Find Prof. Zaman in 2200 and click him to chat.</p>
             <button className="go">{isTouch ? 'Tap to walk in' : 'Click to walk in'}</button>
             {!isTouch && (
               <button
@@ -103,12 +103,12 @@ export default function App() {
             {isTouch ? (
               <div className="keys">
                 <span><b>Left thumb</b> joystick to walk (push all the way to hurry)</span>
-                <span><b>Right thumb</b> drag to look</span>
+                <span><b>Right thumb</b> drag to swing the camera</span>
               </div>
             ) : (
               <div className="keys">
                 <span><b>W A S D</b> walk</span>
-                <span><b>Mouse</b> look</span>
+                <span><b>Mouse</b> camera</span>
                 <span><b>Shift</b> sprint</span>
                 <span><b>Space</b> jump</span>
                 <span><b>C</b> crouch</span>

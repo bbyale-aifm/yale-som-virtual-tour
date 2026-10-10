@@ -10,7 +10,7 @@ import * as THREE from 'three'
 //   pants       null | any CSS color
 //   overalls    true → bib + straps in the pants color (pass pants too)
 //   hat         null | 'bucket' | any CSS color (bucket hat in that color)
-//   anim        'idle' | 'hop' | 'dance' | 'wave' | 'spin' | 'circle' | 'catch'
+//   anim        'idle' | 'walk' | 'run' | 'hop' | 'dance' | 'wave' | 'spin' | 'circle' | 'catch'
 //   circle      { center: [x, z], radius, speed } when anim = 'circle'
 //   sitting     true → legs stick forward (put the root on a chair seat)
 //   height      meters (default 1)
@@ -303,6 +303,15 @@ export default function Labubu({
       b.scale.set(1 + (1 - h) * 0.08, 1 - (1 - h) * 0.1, 1 + (1 - h) * 0.08)
       armL.current.rotation.z = 0.55 + h * 1.6
       armR.current.rotation.z = -0.55 - h * 1.6
+    } else if (anim === 'walk' || anim === 'run') {
+      // waddle: bob each step, swing arms opposite, rock side to side
+      const w = anim === 'run' ? 13 : 8.5
+      const step = Math.sin(t * w)
+      b.position.y = Math.abs(step) * (anim === 'run' ? 0.07 : 0.04)
+      b.rotation.z = step * 0.08
+      b.rotation.x = anim === 'run' ? 0.18 : 0.05 // lean into it
+      armL.current.rotation.x = step * (anim === 'run' ? 1.1 : 0.7)
+      armR.current.rotation.x = -step * (anim === 'run' ? 1.1 : 0.7)
     } else if (anim === 'dance') {
       b.rotation.z = Math.sin(t * 3) * 0.18
       b.rotation.y = Math.sin(t * 1.5) * 0.4
