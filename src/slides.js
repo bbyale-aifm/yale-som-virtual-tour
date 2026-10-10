@@ -3,11 +3,11 @@ import * as THREE from 'three'
 // Lecture slides drawn on canvas, one deck per course (Yale SOM Fall 2026 MBA courses).
 // kind: 'title' | 'chart' | 'content'
 export const COURSES = {
-  mgt409: { code: 'MGT 409', name: 'AI Foundations for Managers', prof: 'Albus Dumbledore' },
+  mgt409: { code: 'MGT 409', name: 'AI Foundations for Managers', prof: 'Tauhid Zaman' },
   mgt404: { code: 'MGT 404', name: 'Basics of Economics', prof: 'Minerva McGonagall' },
   mgt403: { code: 'MGT 403', name: 'Probability Modeling & Statistics', prof: 'Sybill Trelawney' },
   mgt887: { code: 'MGT 887', name: 'Negotiations', prof: 'Horace Slughorn' },
-  mgt402: { code: 'MGT 402', name: 'Basics of Accounting', prof: 'Severus Snape' },
+  mgt402: { code: 'MGT 402', name: 'Basics of Accounting', prof: 'Albus Dumbledore' },
   mgt538: { code: 'MGT 538', name: 'Mastering Influence & Persuasion', prof: 'Gilderoy Lockhart' },
   mgt800: { code: 'MGT 800', name: 'Crisis Management in Tech', prof: 'Alastor Moody' },
   mgt541: { code: 'MGT 541', name: 'Corporate Finance', prof: 'Filius Flitwick' },

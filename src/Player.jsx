@@ -3,15 +3,19 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js'
 import { EYE, MAX_STEP, SPAWN, collide, floorAt, locate } from './layout.js'
+import { TALK_RANGE, talk, talkables } from './talk.js'
 
 const CROUCH_EYE = 1.05
 const JUMP_SPEED = 4.2
 const GRAVITY = 12
 const LOOK_SPEED = 0.005 // radians per touch pixel
+const CENTER = new THREE.Vector2(0, 0)
+const typing = (e) => /^(INPUT|TEXTAREA)$/.test(e.target?.tagName ?? '')
 
 // PC controls work like a shooter: WASD move, mouse look, Shift sprint, Space jump, C crouch.
 // Touch controls come in through touchRef: { active, move: [x, y], look: [dx, dy], jump }.
-export default function Player({ lockRef, mapRef, touchRef, onLock, onWhere }) {
+// Aim the crosshair at a professor and click to talk: onAim(id | null) and onTalk(id).
+export default function Player({ lockRef, mapRef, touchRef, onLock, onWhere, onAim, onTalk }) {
   const { camera, gl } = useThree()
   const controls = useMemo(() => new PointerLockControls(camera, gl.domElement), [camera, gl])
   const keys = useRef({})
@@ -23,6 +27,8 @@ export default function Player({ lockRef, mapRef, touchRef, onLock, onWhere }) {
   const vy = useRef(0)
   const fwd = useMemo(() => new THREE.Vector3(), [])
   const euler = useMemo(() => new THREE.Euler(0, 0, 0, 'YXZ'), [])
+  const ray = useMemo(() => new THREE.Raycaster(), [])
+  const aimed = useRef(null)
 
   useEffect(() => {
     camera.position.set(SPAWN.x, EYE, SPAWN.z)
@@ -36,11 +42,20 @@ export default function Player({ lockRef, mapRef, touchRef, onLock, onWhere }) {
     controls.addEventListener('lock', on)
     controls.addEventListener('unlock', off)
     const down = (e) => {
+      if (typing(e)) return // chatting: don't walk or jump while typing
       keys.current[e.code] = true
       if (e.code === 'Space') e.preventDefault()
     }
     const up = (e) => (keys.current[e.code] = false)
     const blur = () => (keys.current = {})
+    const click = () => {
+      if (!controls.isLocked || !aimed.current) return
+      const id = aimed.current
+      keys.current = {}
+      controls.unlock()
+      onTalk?.(id)
+    }
+    window.addEventListener('mousedown', click)
     window.addEventListener('keydown', down)
     window.addEventListener('keyup', up)
     window.addEventListener('blur', blur)
@@ -51,8 +66,9 @@ export default function Player({ lockRef, mapRef, touchRef, onLock, onWhere }) {
       window.removeEventListener('keydown', down)
       window.removeEventListener('keyup', up)
       window.removeEventListener('blur', blur)
+      window.removeEventListener('mousedown', click)
     }
-  }, [camera, controls, lockRef, onLock])
+  }, [camera, controls, lockRef, onLock, onTalk])
 
   useFrame((_, rawDt) => {
     const dt = Math.min(rawDt, 0.05)
@@ -66,7 +82,7 @@ export default function Player({ lockRef, mapRef, touchRef, onLock, onWhere }) {
       floorY.current = floorAt(x, z)
     }
     const touch = touchRef.current
-    const active = controls.isLocked || touch.active
+    const active = (controls.isLocked || touch.active) && !talk.with
 
     // touch look: drag on the right side of the screen
     if (touch.active && (touch.look[0] || touch.look[1])) {
@@ -134,6 +150,23 @@ export default function Player({ lockRef, mapRef, touchRef, onLock, onWhere }) {
     camera.position.y = devY.current ?? floorY.current + eye.current + jumpY.current
 
     if (import.meta.env.DEV) document.body.dataset.pos = `${camera.position.x.toFixed(2)},${camera.position.z.toFixed(2)},${fwd.x.toFixed(2)},${fwd.z.toFixed(2)}|${touch.move.map((v) => v.toFixed(2))}`
+    // what's under the crosshair? (only professors are tested, so this is cheap)
+    let hit = null
+    if (active && talkables.size) {
+      ray.setFromCamera(CENTER, camera)
+      ray.far = TALK_RANGE
+      const found = ray.intersectObjects([...talkables], true)[0]
+      if (found) {
+        let o = found.object
+        while (o && !o.userData.talkId) o = o.parent
+        hit = o?.userData.talkId ?? null
+      }
+    }
+    if (hit !== aimed.current) {
+      aimed.current = hit
+      onAim?.(hit)
+    }
+
     mapRef.current?.(camera.position.x, camera.position.z, fwd.x, fwd.z)
     const w = locate(camera.position.x, camera.position.z)
     if (w !== where.current) {

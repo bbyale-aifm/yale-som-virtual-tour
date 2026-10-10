@@ -5,6 +5,10 @@ import Player from './Player.jsx'
 import Minimap from './Minimap.jsx'
 import TouchControls from './TouchControls.jsx'
 import { EYE, SPAWN } from './layout.js'
+import ChatWindow from './ChatWindow.jsx'
+import { talk } from './talk.js'
+
+const PROF_NAMES = { zaman: 'Prof. Zaman' }
 
 export default function App() {
   const [locked, setLocked] = useState(false)
@@ -14,6 +18,15 @@ export default function App() {
   const mapRef = useRef()
   const onLock = useCallback((v) => setLocked(v), [])
   const onWhere = useCallback((w) => setWhere(w), [])
+  // professor under the crosshair, and who you're chatting with
+  const [aim, setAim] = useState(null)
+  const [chatWith, setChatWith] = useState(null)
+  const onAim = useCallback((id) => setAim(id), [])
+  const onTalk = useCallback((id) => {
+    talk.with = id
+    setAim(null)
+    setChatWith(id)
+  }, [])
   // phones have no pointer lock, so they get a joystick + drag-to-look instead
   const [isTouch] = useState(() => matchMedia('(pointer: coarse)').matches) // phones + tablets; touchscreen laptops still get mouse mode
   const [touchOn, setTouchOn] = useState(false)
@@ -24,8 +37,13 @@ export default function App() {
     setTouchOn(on)
   }
   const playing = locked || touchOn
+  const closeChat = useCallback(() => {
+    talk.with = null
+    setChatWith(null)
+    if (!touchRef.current.active) lockRef.current?.() // straight back to walking
+  }, [])
   useEffect(() => {
-    const k = (e) => e.code === 'KeyM' && setShowMap((v) => !v)
+    const k = (e) => e.code === 'KeyM' && !/^(INPUT|TEXTAREA)$/.test(e.target.tagName) && setShowMap((v) => !v)
     window.addEventListener('keydown', k)
     return () => window.removeEventListener('keydown', k)
   }, [])
@@ -37,7 +55,7 @@ export default function App() {
         dpr={[1, 1.75]}
       >
         <World />
-        <Player lockRef={lockRef} mapRef={mapRef} touchRef={touchRef} onLock={onLock} onWhere={onWhere} />
+        <Player lockRef={lockRef} mapRef={mapRef} touchRef={touchRef} onLock={onLock} onWhere={onWhere} onAim={onAim} onTalk={onTalk} />
       </Canvas>
 
       <div className="where">
@@ -50,10 +68,21 @@ export default function App() {
       <button className="maptoggle" onClick={() => setShowMap((s) => !s)}>
         {showMap ? 'hide map' : 'map'}
       </button>
-      {playing && <div className="crosshair" />}
-      {touchOn && <TouchControls touchRef={touchRef} onPause={() => setTouch(false)} />}
+      {playing && !chatWith && <div className="crosshair" />}
+      {touchOn && !chatWith && <TouchControls touchRef={touchRef} onPause={() => setTouch(false)} />}
+      {aim && !chatWith && playing &&
+        (touchOn ? (
+          <button className="talkhint" onClick={() => onTalk(aim)}>
+            Tap to talk to <b>{PROF_NAMES[aim] ?? aim}</b>
+          </button>
+        ) : (
+          <div className="talkhint">
+            Click to talk to <b>{PROF_NAMES[aim] ?? aim}</b>
+          </div>
+        ))}
+      {chatWith && <ChatWindow profId={chatWith} onClose={closeChat} />}
 
-      {!playing && (
+      {!playing && !chatWith && (
         <div className="overlay" onClick={() => (isTouch ? setTouch(true) : lockRef.current?.())}>
           <div className="card">
             <div className="kicker">Yale SOM · Evans Hall</div>
